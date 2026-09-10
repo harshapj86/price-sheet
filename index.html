@@ -357,7 +357,7 @@
   <div id="results"></div>
 
   <footer>
-    Prices shown are customer prices in INR, taken from the latest parts pricing file. Values update whenever this page is republished with a new data file. Not a quote — final repair cost may include labour and taxes.
+    Prices shown are customer prices in INR, rounded up to the nearest rupee for easier cash collection, taken from the latest parts pricing file. Values update whenever this page is republished with a new data file. Not a quote — final repair cost may include labour and taxes.
   </footer>
 </div>
 
@@ -437,7 +437,7 @@ function highlight(text, q){
 }
 
 function fmt(n){
-  return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  return '₹' + Math.round(n).toLocaleString('en-IN');
 }
 
 function render(){
@@ -488,7 +488,7 @@ function render(){
       .map(k => {
         const meta = PRICE_LABELS[k];
         if(discount > 0){
-          const discounted = d[k] * (1 - discount/100);
+          const discounted = Math.ceil(d[k] * (1 - discount/100));
           return `<div class="price-cell ${meta.cls}">
             <div class="plabel">${meta.label}</div>
             <div class="pval struck">${fmt(d[k])}</div>
