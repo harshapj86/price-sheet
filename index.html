@@ -58,6 +58,17 @@
     padding:4px 9px;
     border-radius:4px;
   }
+  .tag-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .tag.updated{
+    color:var(--teal-deep);
+    background:#e4f1ef;
+    border-color:#c6e2dd;
+  }
   p.lede{
     color:var(--ink-soft);
     font-size:14.5px;
@@ -327,7 +338,10 @@
   <header>
     <div class="brand">
       <h1>Parts Price Lookup</h1>
-      <span class="tag" id="stamp">loading…</span>
+      <div class="tag-row">
+        <span class="tag updated" id="updatedStamp"></span>
+        <span class="tag" id="stamp">loading…</span>
+      </div>
     </div>
     <p class="lede">Search any Apple service part number to see current customer pricing. Exchange price applies when a faulty part is returned; stocking price applies otherwise.</p>
   </header>
@@ -370,8 +384,10 @@ const PRICE_LABELS = {
   ao: {label:'Add-on price',   cls:'other'},
   dg: {label:'Display + back glass', cls:'other'},
   pr: {label:'Part required for repair', cls:'other'},
+  bg: {label:'Back glass only', cls:'other'},
+  do: {label:'Display only',   cls:'other'},
 };
-const PRICE_ORDER = ['e','s','b','dg','cr','ao','pr'];
+const PRICE_ORDER = ['e','s','b','dg','bg','do','cr','ao','pr'];
 
 let DATA = [];
 let activeCat = null;
@@ -383,6 +399,7 @@ const totalLine = document.getElementById('totalLine');
 const clearBtn = document.getElementById('clearBtn');
 const catbar = document.getElementById('catbar');
 const stamp = document.getElementById('stamp');
+const updatedStamp = document.getElementById('updatedStamp');
 const discountInput = document.getElementById('discount');
 const discountClear = document.getElementById('discountClear');
 const discountNote = document.getElementById('discountNote');
@@ -396,7 +413,11 @@ function getDiscount(){
 fetch('data.json')
   .then(r => r.json())
   .then(json => {
-    DATA = json;
+    const isWrapped = json && !Array.isArray(json) && Array.isArray(json.parts);
+    DATA = isWrapped ? json.parts : json;
+    const updated = isWrapped ? json.updated : null;
+    updatedStamp.textContent = updated ? ('Prices updated on ' + formatUpdatedDate(updated)) : '';
+    updatedStamp.style.display = updated ? '' : 'none';
     stamp.textContent = DATA.length.toLocaleString() + ' parts loaded';
     totalLine.textContent = '';
     buildCatBar();
@@ -407,6 +428,12 @@ fetch('data.json')
     resultsEl.innerHTML = '<div class="empty-state"><div class="big">Could not load data.json</div><div>Make sure data.json is uploaded alongside index.html.</div></div>';
     console.error(err);
   });
+
+function formatUpdatedDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  if(isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+}
 
 function buildCatBar(){
   const cats = [...new Set(DATA.map(d => d.c))].sort();
